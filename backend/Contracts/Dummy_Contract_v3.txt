@@ -1,0 +1,5 @@
+This is a dummy contract for verification.
+Parties Involved: Acme Corp and Beta Inc.
+Total Contract Value: $500,000.
+Governing Law: State of California.
+Effective Date: January 1, 2026.
