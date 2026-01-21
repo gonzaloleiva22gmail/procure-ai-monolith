@@ -16,5 +16,9 @@ export default defineConfig({
       '/generate': 'http://localhost:8000',
       '/draft': 'http://localhost:8000',
     }
+  },
+  build: {
+    outDir: 'backend/static',
+    emptyOutDir: true
   }
 })
