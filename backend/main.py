@@ -12,11 +12,25 @@ except ImportError:
     print("Warning: python-dotenv not found. Assuming environment variables are set by the platform.")
 
 # DEBUG: Print environment info
+# DEBUG: Print environment info
 import os
 print(f"DEBUG: Starting Backend...")
 print(f"DEBUG: Current Directory: {os.getcwd()}")
 print(f"DEBUG: PORT env var: {os.environ.get('PORT', 'Not Set')}")
 print(f"DEBUG: XAI_API_KEY present: {'Yes' if os.environ.get('XAI_API_KEY') else 'No'}")
+
+# DEBUG: List static files
+static_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+print(f"DEBUG: Checking static path: {static_path}")
+if os.path.exists(static_path):
+    print(f"DEBUG: Static folder contents: {os.listdir(static_path)}")
+    assets_path = os.path.join(static_path, "assets")
+    if os.path.exists(assets_path):
+        print(f"DEBUG: Assets folder contents: {os.listdir(assets_path)}")
+    else:
+        print("DEBUG: Assets folder NOT found inside static!")
+else:
+    print("DEBUG: Static folder NOT found!")
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -207,6 +221,10 @@ async def serve_react_app(full_path: str):
     # 1. Try to serve specific file if it exists (e.g., favicon.ico, robot.txt)
     if full_path and os.path.exists(static_file_path) and os.path.isfile(static_file_path):
         return FileResponse(static_file_path)
+    
+    # DEBUG: Log missed asset requests
+    if full_path.startswith("assets/"):
+        print(f"DEBUG: 404 for asset: {full_path} (Looked at: {static_file_path})")
     
     # 2. Otherwise/Default: serve index.html (SPA routing)
     index_path = os.path.join(current_dir, "static", "index.html")
