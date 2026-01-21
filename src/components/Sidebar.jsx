@@ -14,10 +14,21 @@ const Sidebar = ({ activeView, onViewChange }) => {
 
   React.useEffect(() => {
     const fetchCounts = async () => {
+      console.log("ANTIGRAVITY DEBUG: Sidebar loading... (Version 2.1)");
       try {
         // Fetch Templates Count
+        console.log("ANTIGRAVITY DEBUG: Fetching /templates...");
         const templatesRes = await fetch('/templates');
+        console.log("ANTIGRAVITY DEBUG: /templates status:", templatesRes.status);
+
+        if (!templatesRes.ok) {
+          const text = await templatesRes.text();
+          console.error("ANTIGRAVITY DEBUG: /templates FAILED. Body:", text);
+          throw new Error(`Templates API Error: ${templatesRes.status}`);
+        }
+
         const templatesData = await templatesRes.json();
+        console.log("ANTIGRAVITY DEBUG: /templates data:", templatesData);
 
         // Fetch Contracts Count
         const contractsRes = await fetch('/contracts');
@@ -29,7 +40,7 @@ const Sidebar = ({ activeView, onViewChange }) => {
           contracts: Array.isArray(contractsData) ? contractsData.length : 0
         }));
       } catch (error) {
-        console.error("Failed to fetch sidebar counts:", error);
+        console.error("ANTIGRAVITY DEBUG: Uncaught Sidebar Error:", error);
       }
     };
 
