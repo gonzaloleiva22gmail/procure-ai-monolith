@@ -1,0 +1,21 @@
+# Nixpacks Configuration for Hybrid Python + React App
+
+[phases.setup]
+nixPkgs = ["python3", "nodejs"]
+
+[phases.install]
+cmds = [
+    "npm install",
+    "pip install -r requirements.txt"
+]
+
+[phases.build]
+cmds = [
+    "npm run build",
+    "if [ -d \"backend/static\" ]; then rm -rf backend/static; fi",
+    "mkdir -p backend/static",
+    "cp -r dist/* backend/static/"
+]
+
+[start]
+cmd = "uvicorn backend.main:app --host 0.0.0.0 --port $PORT"
