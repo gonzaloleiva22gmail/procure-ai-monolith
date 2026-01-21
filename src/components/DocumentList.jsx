@@ -6,7 +6,7 @@ const DocumentList = ({ title, type, onSelectTemplate }) => {
 
     React.useEffect(() => {
         if (type === 'templates') {
-            fetch('http://localhost:8000/templates')
+            fetch('/templates')
                 .then(res => res.json())
                 .then(data => {
                     const enriched = data.map(t => ({
@@ -17,7 +17,7 @@ const DocumentList = ({ title, type, onSelectTemplate }) => {
                 })
                 .catch(err => console.error("Failed to fetch templates", err));
         } else if (type === 'contracts') {
-            fetch('http://localhost:8000/contracts')
+            fetch('/contracts')
                 .then(res => res.json())
                 .then(data => {
                     const enriched = data.map(c => ({

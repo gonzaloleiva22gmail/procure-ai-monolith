@@ -10,7 +10,7 @@ const ContractsLayout = () => {
 
     // Fetch contracts list on mount
     useEffect(() => {
-        fetch('http://localhost:8000/contracts')
+        fetch('/contracts')
             .then(res => res.json())
             .then(data => {
                 const enriched = data.map(c => ({ ...c, author: 'System' }));
@@ -25,7 +25,7 @@ const ContractsLayout = () => {
         setIsExtracting(true);
 
         try {
-            const res = await fetch('http://localhost:8000/contracts/extract', {
+            const res = await fetch('/contracts/extract', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ filename: contract.name })
@@ -68,8 +68,8 @@ const ContractsLayout = () => {
                                         key={doc.id}
                                         onClick={() => handleSelectContract(doc)}
                                         className={`cursor-pointer transition-colors ${selectedContract?.id === doc.id
-                                                ? 'bg-blue-50 border-l-4 border-blue-500'
-                                                : 'hover:bg-slate-50'
+                                            ? 'bg-blue-50 border-l-4 border-blue-500'
+                                            : 'hover:bg-slate-50'
                                             }`}
                                     >
                                         <td className="px-6 py-4">

@@ -16,11 +16,11 @@ const Sidebar = ({ activeView, onViewChange }) => {
     const fetchCounts = async () => {
       try {
         // Fetch Templates Count
-        const templatesRes = await fetch('http://localhost:8000/templates');
+        const templatesRes = await fetch('/templates');
         const templatesData = await templatesRes.json();
 
         // Fetch Contracts Count
-        const contractsRes = await fetch('http://localhost:8000/contracts');
+        const contractsRes = await fetch('/contracts');
         const contractsData = await contractsRes.json();
 
         setCounts(prev => ({
