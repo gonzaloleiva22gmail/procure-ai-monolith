@@ -18,9 +18,22 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import List, Dict, Optional
 from openai import OpenAI
-from backend.analyzer import analyze_document
-from backend.generator import generate_document
-from backend.file_utils import get_knowledge_base_content
+# IMPORTS (Hybrid Strategy for Local vs Production)
+try:
+    # Local Development (Repo Root is path)
+    from backend.analyzer import analyze_document
+    from backend.generator import generate_document
+    from backend.file_utils import get_knowledge_base_content
+except ImportError:
+    # Production / Railway (Backend folder indicates root context)
+    try:
+        from analyzer import analyze_document
+        from generator import generate_document
+        from file_utils import get_knowledge_base_content
+    except ImportError as e:
+        print(f"CRITICAL IMPORT ERROR: {e}")
+        # Re-raise to crash logs so we can debug
+        raise e
 
 app = FastAPI()
 
@@ -51,7 +64,8 @@ def template_consultant_chat(request: ChatRequest):
     analysis_context = "No template selected."
     if request.filename:
         try:
-            file_path = os.path.join("backend", "templates", request.filename)
+            # FIX: Use relative path from main.py
+            file_path = os.path.join(current_dir, "templates", request.filename)
             if os.path.exists(file_path):
                 res = analyze_document(file_path)
                 analysis_context = f"Variables found: {str(res)}"
@@ -71,9 +85,9 @@ def template_consultant_chat(request: ChatRequest):
         "5. Report: In the 'response' key, output a strict Status Report. Do NOT be conversational.\n\n"
         "Response Format (Strictly Enforce This):\n"
         "1. MAPPED VARIABLES:\n"
-        "[Variable Name]: [Snippet of extracted text]\n...\n"
+        "   [Variable Name]: [Snippet of extracted text]\n...\n"
         "2. GAP ANALYSIS (MISSING):\n"
-        "[Variable Name]: [Brief description of what is needed]\n...\n\n"
+        "   [Variable Name]: [Brief description of what is needed]\n...\n\n"
         "IMPORTANT: Output valid JSON with exactly two keys: 'response' and 'extracted_data'."
     )
     messages = [{"role": "system", "content": system_instruction}]
@@ -94,20 +108,23 @@ def template_consultant_chat(request: ChatRequest):
 
 @app.get("/templates")
 def get_templates():
-    templates_dir = os.path.join("backend", "templates")
+    # FIX: Use relative path from main.py
+    templates_dir = os.path.join(current_dir, "templates")
     if not os.path.exists(templates_dir): return []
     return [{"id": f, "name": f, "size": "Unknown", "author": "System"} for f in os.listdir(templates_dir) if f.endswith(".docx") and not f.startswith("~$")]
 
 @app.get("/contracts")
 def get_contracts():
-    contracts_dir = os.path.join("backend", "Contracts")
+    # FIX: Use relative path from main.py
+    contracts_dir = os.path.join(current_dir, "Contracts")
     if not os.path.exists(contracts_dir): return []
     return [{"id": f, "name": f, "size": "Unknown", "author": "System"} for f in os.listdir(contracts_dir) if not f.startswith("~$")]
 
 @app.post("/analyze")
 def analyze_template(request: AnalyzeRequest):
     try:
-        return analyze_document(os.path.join("backend", "templates", request.filename))
+        # FIX: Use relative path from main.py
+        return analyze_document(os.path.join(current_dir, "templates", request.filename))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -138,7 +155,8 @@ def chat_agent(request: ChatRequest):
     # Basic Chat
     try:
         # Load Knowledge Base Context
-        kb_path = os.path.join("backend", "knowledge_base")
+        # FIX: Use relative path from main.py
+        kb_path = os.path.join(current_dir, "knowledge_base")
         kb_context = get_knowledge_base_content(kb_path)
 
         system_prompt = (
@@ -164,20 +182,23 @@ def read_root():
     return {"status": "Backend is online."}
 
 # Mount the assets folder (JS/CSS)
-if os.path.exists("backend/static/assets"):
-    app.mount("/assets", StaticFiles(directory="backend/static/assets"), name="assets")
+# FIX: Use relative path from main.py
+static_assets_path = os.path.join(current_dir, "static", "assets")
+if os.path.exists(static_assets_path):
+    app.mount("/assets", StaticFiles(directory=static_assets_path), name="assets")
 
 # Catch-All Route for React Router (Must be the last route)
 @app.get("/{full_path:path}")
 async def serve_react_app(full_path: str):
-    # If the file exists in static (e.g., favicon.ico), serve it
-    static_file_path = f"backend/static/{full_path}"
+    # FIX: Use relative path from main.py
+    static_file_path = os.path.join(current_dir, "static", full_path)
     if os.path.exists(static_file_path) and os.path.isfile(static_file_path):
         return FileResponse(static_file_path)
     
     # Otherwise, serve index.html (Client-Side Routing)
-    if os.path.exists("backend/static/index.html"):
-        return FileResponse("backend/static/index.html")
+    index_path = os.path.join(current_dir, "static", "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
     
     return {"error": "Frontend not built. Run 'npm run build' and move dist to backend/static"}
 
