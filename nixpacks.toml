@@ -1,7 +1,9 @@
 # Nixpacks Configuration for Hybrid Python + React App
 
+providers = ["python", "node"]
+
 [phases.setup]
-nixPkgs = ["python3", "nodejs"]
+nixPkgs = ["python3", "nodejs", "npm"]
 
 [phases.install]
 cmds = [
