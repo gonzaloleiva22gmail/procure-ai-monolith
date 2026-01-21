@@ -184,10 +184,6 @@ def chat_agent(request: ChatRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/")
-def read_root():
-    return {"status": "Backend is online."}
-
 # Mount the assets folder (JS/CSS)
 # FIX: Use relative path from main.py
 static_assets_path = os.path.join(current_dir, "static", "assets")
@@ -195,14 +191,19 @@ if os.path.exists(static_assets_path):
     app.mount("/assets", StaticFiles(directory=static_assets_path), name="assets")
 
 # Catch-All Route for React Router (Must be the last route)
+# Note: "full_path" captures everything. "/{full_path:path}" will capture empty string too if configured, 
+# but FastAPI often treats root separate. We can use a catch-all that defaults to index.html.
+
 @app.get("/{full_path:path}")
 async def serve_react_app(full_path: str):
     # FIX: Use relative path from main.py
     static_file_path = os.path.join(current_dir, "static", full_path)
-    if os.path.exists(static_file_path) and os.path.isfile(static_file_path):
+    
+    # 1. Try to serve specific file if it exists (e.g., favicon.ico, robot.txt)
+    if full_path and os.path.exists(static_file_path) and os.path.isfile(static_file_path):
         return FileResponse(static_file_path)
     
-    # Otherwise, serve index.html (Client-Side Routing)
+    # 2. Otherwise/Default: serve index.html (SPA routing)
     index_path = os.path.join(current_dir, "static", "index.html")
     if os.path.exists(index_path):
         return FileResponse(index_path)
