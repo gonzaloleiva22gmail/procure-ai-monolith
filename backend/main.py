@@ -1,3 +1,5 @@
+print("\n\n!!! I AM THE NEW VERSION - IF YOU SEE THIS, THE CODE IS LOADED !!!\n\n")
+
 import os
 import sys
 from dotenv import load_dotenv
@@ -13,13 +15,12 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import List, Dict, Optional
 from openai import OpenAI
-# Backend Module Imports
 from backend.analyzer import analyze_document
 from backend.generator import generate_document
+from backend.file_utils import get_knowledge_base_content
 
 app = FastAPI()
 
-# 2. CORS (Allows Vercel & Localhost to talk to this API)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -28,20 +29,65 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 3. CLIENT SETUP
 XAI_API_KEY = os.getenv("XAI_API_KEY")
-client = OpenAI(
-    api_key=XAI_API_KEY or "dummy_key",
-    base_url="https://api.x.ai/v1",
-)
+client = OpenAI(api_key=XAI_API_KEY or "dummy_key", base_url="https://api.x.ai/v1")
 
-# --- MODELS ---
+class ChatRequest(BaseModel): 
+    message: str
+    filename: Optional[str] = None
+    history: Optional[List[Dict[str, str]]] = []
 class AnalyzeRequest(BaseModel): filename: str
 class GenerateRequest(BaseModel): filename: str; answers: Dict[str, str]
-class ChatRequest(BaseModel): message: str; filename: Optional[str] = None; history: Optional[List[Dict[str, str]]] = []
 class DraftRequest(BaseModel): field_label: str; user_notes: str; context_files: Optional[str] = ""
 
 # --- ENDPOINTS ---
+
+@app.post("/template-chat")
+def template_consultant_chat(request: ChatRequest):
+    # This is the endpoint that was missing
+    analysis_context = "No template selected."
+    if request.filename:
+        try:
+            file_path = os.path.join("backend", "templates", request.filename)
+            if os.path.exists(file_path):
+                res = analyze_document(file_path)
+                analysis_context = f"Variables found: {str(res)}"
+        except: pass
+
+    system_instruction = (
+        f"You are an Intelligent Document Analyst. Context: {analysis_context}. "
+        "Your Execution Logic:\n"
+        "1. Analyze Context: Read the list of variables/questions provided in the context.\n"
+        "2. Scan Input: Review the user's provided project brief or text.\n"
+        "3. Cross-Reference: For EACH variable, check if the user's text answers it. "
+        "Recognize that a single source section often answers multiple variables. Map data to ALL matching variables.\n"
+        "4. Extract: If YES, extract content into 'extracted_data' JSON key. "
+        "**High Fidelity Rules**:\n"
+        "   - Verbatim Retention: Do NOT summarize list items. If the source text contains bullet points, extract the entire list. Retain the richness.\n"
+        "   - Detail Preservation: If text mentions specific metrics (e.g., '4 hours RTO'), ensure these are explicitly preserved. Do not generalize.\n"
+        "5. Report: In the 'response' key, output a strict Status Report. Do NOT be conversational.\n\n"
+        "Response Format (Strictly Enforce This):\n"
+        "1. MAPPED VARIABLES:\n"
+        "[Variable Name]: [Snippet of extracted text]\n...\n"
+        "2. GAP ANALYSIS (MISSING):\n"
+        "[Variable Name]: [Brief description of what is needed]\n...\n\n"
+        "IMPORTANT: Output valid JSON with exactly two keys: 'response' and 'extracted_data'."
+    )
+    messages = [{"role": "system", "content": system_instruction}]
+    if request.history: messages.extend(request.history)
+    messages.append({"role": "user", "content": request.message})
+
+    try:
+        completion = client.chat.completions.create(
+            model="grok-3", 
+            messages=messages,
+            temperature=0.7,
+            response_format={"type": "json_object"}
+        )
+        import json
+        return json.loads(completion.choices[0].message.content)
+    except Exception as e:
+        return {"response": f"Error: {str(e)}", "extracted_data": {}}
 
 @app.get("/templates")
 def get_templates():
@@ -74,7 +120,7 @@ def generate_doc(request: GenerateRequest):
 def draft_content(request: DraftRequest):
     try:
         completion = client.chat.completions.create(
-            model="grok-2", # Using stable model
+            model="grok-3",
             messages=[
                 {"role": "system", "content": "You are an expert Bid Writer."},
                 {"role": "user", "content": f"Draft text for {request.field_label} based on: {request.user_notes}"}
@@ -84,33 +130,31 @@ def draft_content(request: DraftRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# --- THIS IS THE MISSING PIECE (Fixes your 404) ---
-@app.post("/template-chat")
-def template_consultant_chat(request: ChatRequest):
-    analysis_context = "No template selected."
-    if request.filename:
-        try:
-            file_path = os.path.join("backend", "templates", request.filename)
-            if os.path.exists(file_path):
-                res = analyze_document(file_path)
-                analysis_context = f"Variables found: {str(res)}"
-        except: pass
-
-    messages = [{"role": "system", "content": f"You are a Procurement Consultant. Context: {analysis_context}. Extract data to JSON."}]
-    if request.history: messages.extend(request.history)
-    messages.append({"role": "user", "content": request.message})
-
+@app.post("/chat")
+def chat_agent(request: ChatRequest):
+    # Basic Chat
     try:
-        completion = client.chat.completions.create(
-            model="grok-2", 
-            messages=messages,
-            temperature=0.7,
-            response_format={"type": "json_object"}
+        # Load Knowledge Base Context
+        kb_path = os.path.join("backend", "knowledge_base")
+        kb_context = get_knowledge_base_content(kb_path)
+
+        system_prompt = (
+            "You are a Data Analyst. Answer the user's question based strictly on the following context:\n\n"
+            f"{kb_context}\n\n"
+            "If the answer is not in the context, say you don't have that information."
         )
-        import json
-        return json.loads(completion.choices[0].message.content)
+
+        messages = [{"role": "system", "content": system_prompt}]
+        if request.history: messages.extend(request.history)
+        messages.append({"role": "user", "content": request.message})
+
+        completion = client.chat.completions.create(
+             model="grok-3",
+             messages=messages
+        )
+        return {"response": completion.choices[0].message.content}
     except Exception as e:
-        return {"response": f"Error: {str(e)}", "extracted_data": {}}
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/")
 def read_root():
