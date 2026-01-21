@@ -2,12 +2,14 @@ print("\n\n!!! I AM THE NEW VERSION - IF YOU SEE THIS, THE CODE IS LOADED !!!\n\
 
 import os
 import sys
-from dotenv import load_dotenv
-
-# 1. LOAD ENV
-current_dir = os.path.dirname(os.path.abspath(__file__))
-env_path = os.path.join(current_dir, '..', '.env')
-load_dotenv(dotenv_path=env_path)
+try:
+    from dotenv import load_dotenv
+    # 1. LOAD ENV
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    env_path = os.path.join(current_dir, '..', '.env')
+    load_dotenv(dotenv_path=env_path)
+except ImportError:
+    print("Warning: python-dotenv not found. Assuming environment variables are set by the platform.")
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
