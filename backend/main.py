@@ -11,6 +11,13 @@ try:
 except ImportError:
     print("Warning: python-dotenv not found. Assuming environment variables are set by the platform.")
 
+# DEBUG: Print environment info
+import os
+print(f"DEBUG: Starting Backend...")
+print(f"DEBUG: Current Directory: {os.getcwd()}")
+print(f"DEBUG: PORT env var: {os.environ.get('PORT', 'Not Set')}")
+print(f"DEBUG: XAI_API_KEY present: {'Yes' if os.environ.get('XAI_API_KEY') else 'No'}")
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
