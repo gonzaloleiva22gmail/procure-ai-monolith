@@ -12,9 +12,12 @@ cmds = [
 [phases.build]
 cmds = [
     "npm run build",
+    "ls -la",
+    "ls -R dist || echo 'DIST NOT FOUND'",
     "if [ -d \"backend/static\" ]; then rm -rf backend/static; fi",
     "mkdir -p backend/static",
-    "cp -r dist/* backend/static/"
+    "cp -r dist/* backend/static/",
+    "ls -R backend/static || echo 'COPY FAILED'"
 ]
 
 [start]
