@@ -48,15 +48,15 @@ const ChatWindow = ({ activeTemplate, activeContract }) => {
 
         try {
             // 2. DECIDE ENDPOINT
-            let endpoint = "http://localhost:8000/chat";
+            let endpoint = "/chat";
             let payload = { message: currentInput };
 
             if (activeTemplate) {
-                endpoint = "http://localhost:8000/template-chat";
+                endpoint = "/template-chat";
                 payload = { message: currentInput, filename: activeTemplate.name };
             } else if (activeContract !== undefined) {
                 // Contract Mode (Specific or General)
-                endpoint = "http://localhost:8000/contract-chat";
+                endpoint = "/contract-chat";
                 payload = {
                     message: currentInput,
                     filename: activeContract ? activeContract.name : null
@@ -70,29 +70,33 @@ const ChatWindow = ({ activeTemplate, activeContract }) => {
                 body: JSON.stringify(payload),
             });
 
+            if (!response.ok) {
+                throw new Error(`Server responded with status: ${response.status}`);
+            }
+
             const data = await response.json();
 
             // 4. PROCESS RESPONSE
             // Robust check: handle if backend sends { response: ... } or just raw string
-            let aiText = data.response || data.reply || (typeof data === 'string' ? data : "No response received.");
+            let aiText = data?.response || data?.reply || (typeof data === 'string' ? data : "No response received.");
 
             // 2. CAPTURE DATA & FORMAT FOR DISPLAY
-            if (data.extracted_data && typeof data.extracted_data === 'object') {
-                const newVars = data.extracted_data;
+            // Use safe optional chaining and defaults
+            const newVars = data?.extracted_data || {};
+
+            if (newVars && typeof newVars === 'object' && Object.keys(newVars).length > 0) {
 
                 // A. Save to state for the Download Button
                 console.log("Updating Template Data:", newVars);
                 setTemplateData(prev => ({ ...prev, ...newVars }));
 
                 // B. VISUALIZE: Append a readable summary to the chat message
-                if (Object.keys(newVars).length > 0) {
-                    const summaryList = Object.entries(newVars)
-                        .map(([key, value]) => `- **${key}**: ${value}`)
-                        .join("\n");
+                const summaryList = Object.entries(newVars)
+                    .map(([key, value]) => `- **${key}**: ${value}`)
+                    .join("\n");
 
-                    // Append to the AI's text response
-                    aiText += `\n\n___\n**Extracted Information:**\n${summaryList}`;
-                }
+                // Append to the AI's text response
+                aiText += `\n\n___\n**Extracted Information:**\n${summaryList}`;
             }
 
             // 5. SHOW AI RESPONSE
@@ -104,7 +108,7 @@ const ChatWindow = ({ activeTemplate, activeContract }) => {
             console.error("Chat Error:", error);
             setMessages((prev) => [
                 ...prev,
-                { role: "assistant", content: "Error: Could not connect to the AI server." },
+                { role: "assistant", content: `Error: ${error.message || "Could not connect to the AI server."}` },
             ]);
         } finally {
             setIsLoading(false);

@@ -12,6 +12,7 @@ load_dotenv(dotenv_path=env_path)
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import List, Dict, Optional
 from openai import OpenAI
@@ -159,6 +160,24 @@ def chat_agent(request: ChatRequest):
 @app.get("/")
 def read_root():
     return {"status": "Backend is online."}
+
+# Mount the assets folder (JS/CSS)
+if os.path.exists("backend/static/assets"):
+    app.mount("/assets", StaticFiles(directory="backend/static/assets"), name="assets")
+
+# Catch-All Route for React Router (Must be the last route)
+@app.get("/{full_path:path}")
+async def serve_react_app(full_path: str):
+    # If the file exists in static (e.g., favicon.ico), serve it
+    static_file_path = f"backend/static/{full_path}"
+    if os.path.exists(static_file_path) and os.path.isfile(static_file_path):
+        return FileResponse(static_file_path)
+    
+    # Otherwise, serve index.html (Client-Side Routing)
+    if os.path.exists("backend/static/index.html"):
+        return FileResponse("backend/static/index.html")
+    
+    return {"error": "Frontend not built. Run 'npm run build' and move dist to backend/static"}
 
 if __name__ == "__main__":
     import uvicorn
