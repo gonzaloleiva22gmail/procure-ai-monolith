@@ -203,6 +203,27 @@ def chat_agent(request: ChatRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/debug")
+def debug_server():
+    import glob
+    templates_dir = os.path.join(current_dir, "templates")
+    contracts_dir = os.path.join(current_dir, "Contracts")
+    static_dir = os.path.join(current_dir, "static")
+    
+    return {
+        "current_dir": current_dir,
+        "listdir_current": os.listdir(current_dir),
+        "templates_path": templates_dir,
+        "templates_exists": os.path.exists(templates_dir),
+        "templates_content": os.listdir(templates_dir) if os.path.exists(templates_dir) else "NOT FOUND",
+        "contracts_path": contracts_dir,
+        "contracts_exists": os.path.exists(contracts_dir),
+        "contracts_content": os.listdir(contracts_dir) if os.path.exists(contracts_dir) else "NOT FOUND",
+        "env_vars": {k: v for k, v in os.environ.items() if k in ["PORT", "XAI_API_KEY", "RAILWAY_STATIC_URL"]},
+        "static_exists": os.path.exists(static_dir),
+        "static_content": os.listdir(static_dir) if os.path.exists(static_dir) else "NOT FOUND",
+    }
+
 # Mount the assets folder (JS/CSS)
 # FIX: Use relative path from main.py
 static_assets_path = os.path.join(current_dir, "static", "assets")
