@@ -86,16 +86,25 @@ class DraftRequest(BaseModel): field_label: str; user_notes: str; context_files:
 
 @app.post("/template-chat")
 def template_consultant_chat(request: ChatRequest):
+    print(f"DEBUG: Endpoint /template-chat hit with message: {request.message[:50]}...")
+    
     # This is the endpoint that was missing
     analysis_context = "No template selected."
     if request.filename:
         try:
+            print(f"DEBUG: Analyzing file: {request.filename}")
             # FIX: Use relative path from main.py
             file_path = os.path.join(current_dir, "templates", request.filename)
             if os.path.exists(file_path):
+                print(f"DEBUG: File found at {file_path}. Starting analysis...")
                 res = analyze_document(file_path)
+                print(f"DEBUG: Analysis complete. Result size: {len(str(res))}")
                 analysis_context = f"Variables found: {str(res)}"
-        except: pass
+            else:
+                print(f"DEBUG: File NOT found at {file_path}")
+        except Exception as e:
+            print(f"DEBUG: Analysis failed: {e}")
+            pass
 
     system_instruction = (
         f"You are an Intelligent Document Analyst. Context: {analysis_context}. "
@@ -121,15 +130,18 @@ def template_consultant_chat(request: ChatRequest):
     messages.append({"role": "user", "content": request.message})
 
     try:
+        print("DEBUG: Sending request to AI API (grok-3)...")
         completion = client.chat.completions.create(
             model="grok-3", 
             messages=messages,
             temperature=0.7,
             response_format={"type": "json_object"}
         )
+        print("DEBUG: AI API response received.")
         import json
         return json.loads(completion.choices[0].message.content)
     except Exception as e:
+        print(f"DEBUG: AI API failed: {e}")
         return {"response": f"Error: {str(e)}", "extracted_data": {}}
 
 @app.get("/templates")
