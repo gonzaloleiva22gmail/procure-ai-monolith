@@ -86,6 +86,8 @@ class DraftRequest(BaseModel): field_label: str; user_notes: str; context_files:
 
 @app.post("/template-chat")
 def template_consultant_chat(request: ChatRequest):
+    import time
+    request_start = time.time()
     print(f"DEBUG: Endpoint /template-chat hit with message: {request.message[:50]}...")
     
     # This is the endpoint that was missing
@@ -131,15 +133,20 @@ def template_consultant_chat(request: ChatRequest):
 
     try:
         print("DEBUG: Sending request to AI API (grok-3)...")
+        api_start = time.time()
         completion = client.chat.completions.create(
             model="grok-3", 
             messages=messages,
             temperature=0.7,
             response_format={"type": "json_object"}
         )
-        print("DEBUG: AI API response received.")
+        api_duration = time.time() - api_start
+        print(f"DEBUG: AI API response received in {api_duration:.2f}s")
         import json
-        return json.loads(completion.choices[0].message.content)
+        result = json.loads(completion.choices[0].message.content)
+        total_duration = time.time() - request_start
+        print(f"DEBUG: Total /template-chat duration: {total_duration:.2f}s")
+        return result
     except Exception as e:
         print(f"DEBUG: AI API failed: {e}")
         return {"response": f"Error: {str(e)}", "extracted_data": {}}

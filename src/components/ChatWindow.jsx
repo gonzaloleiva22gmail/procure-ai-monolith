@@ -63,12 +63,23 @@ const ChatWindow = ({ activeTemplate, activeContract }) => {
                 };
             }
 
-            // 3. SEND TO SERVER
+            // 3. SEND TO SERVER WITH TIMEOUT
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+            console.log(`[ChatWindow] Sending request to ${endpoint}...`);
+            const startTime = Date.now();
+
             const response = await fetch(endpoint, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
+                signal: controller.signal
             });
+
+            clearTimeout(timeoutId);
+            const responseTime = Date.now() - startTime;
+            console.log(`[ChatWindow] Response received in ${responseTime}ms`);
 
             if (!response.ok) {
                 throw new Error(`Server responded with status: ${response.status}`);
@@ -106,9 +117,17 @@ const ChatWindow = ({ activeTemplate, activeContract }) => {
             ]);
         } catch (error) {
             console.error("Chat Error:", error);
+
+            let errorMessage = "Could not connect to the AI server.";
+            if (error.name === 'AbortError') {
+                errorMessage = "Request timed out after 30 seconds. The AI server may be experiencing high load. Please try again.";
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+
             setMessages((prev) => [
                 ...prev,
-                { role: "assistant", content: `Error: ${error.message || "Could not connect to the AI server."}` },
+                { role: "assistant", content: `Error: ${errorMessage}` },
             ]);
         } finally {
             setIsLoading(false);

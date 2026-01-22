@@ -28,7 +28,9 @@ const Sidebar = ({ activeView, onViewChange }) => {
         }
 
         const templatesData = await templatesRes.json();
-        console.log("ANTIGRAVITY DEBUG: /templates data:", templatesData);
+        console.log("ANTIGRAVITY DEBUG: /templates data:", JSON.stringify(templatesData, null, 2));
+        console.log("ANTIGRAVITY DEBUG: Templates count:", templatesData.length);
+        console.log("ANTIGRAVITY DEBUG: First template:", templatesData[0]);
 
         // Fetch Contracts Count
         const contractsRes = await fetch('/contracts');
