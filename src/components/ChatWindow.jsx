@@ -65,7 +65,7 @@ const ChatWindow = ({ activeTemplate, activeContract }) => {
 
             // 3. SEND TO SERVER WITH TIMEOUT
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+            const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 second timeout
 
             console.log(`[ChatWindow] Sending request to ${endpoint}...`);
             const startTime = Date.now();
@@ -120,7 +120,7 @@ const ChatWindow = ({ activeTemplate, activeContract }) => {
 
             let errorMessage = "Could not connect to the AI server.";
             if (error.name === 'AbortError') {
-                errorMessage = "Request timed out after 30 seconds. The AI server may be experiencing high load. Please try again.";
+                errorMessage = "Request timed out after 90 seconds. The AI server may be experiencing high load. Please try again.";
             } else if (error.message) {
                 errorMessage = error.message;
             }
