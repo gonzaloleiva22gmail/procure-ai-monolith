@@ -195,6 +195,74 @@ def draft_content(request: DraftRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/contract-chat")
+def contract_chat(request: ChatRequest):
+    """Contract Assistant endpoint - handles questions about contracts"""
+    import time
+    request_start = time.time()
+    print(f"DEBUG: Endpoint /contract-chat hit with message: {request.message[:50]}...")
+    
+    # Build context based on selected contract
+    contract_context = "No specific contract selected."
+    if request.filename:
+        try:
+            print(f"DEBUG: Loading contract: {request.filename}")
+            contract_path = os.path.join(current_dir, "Contracts", request.filename)
+            if os.path.exists(contract_path):
+                # Read contract content
+                if contract_path.endswith('.txt'):
+                    with open(contract_path, 'r', encoding='utf-8') as f:
+                        contract_content = f.read()
+                elif contract_path.endswith('.docx'):
+                    from docx import Document
+                    doc = Document(contract_path)
+                    contract_content = '\n'.join([para.text for para in doc.paragraphs])
+                else:
+                    contract_content = "Unsupported file format"
+                
+                contract_context = f"Contract: {request.filename}\n\nContent:\n{contract_content[:5000]}"  # Limit to first 5000 chars
+                print(f"DEBUG: Contract loaded successfully. Length: {len(contract_content)}")
+            else:
+                print(f"DEBUG: Contract file NOT found at {contract_path}")
+        except Exception as e:
+            print(f"DEBUG: Error loading contract: {e}")
+            contract_context = f"Error loading contract: {str(e)}"
+    
+    system_prompt = (
+        "You are a Contract Assistant specialized in analyzing procurement contracts. "
+        f"Context: {contract_context}\n\n"
+        "Your role is to:\n"
+        "1. Answer questions about the contract content\n"
+        "2. Extract key terms, dates, parties, obligations\n"
+        "3. Identify risks or important clauses\n"
+        "4. Provide clear, concise summaries\n\n"
+        "If no specific contract is loaded, provide general contract analysis guidance."
+    )
+    
+    messages = [{"role": "system", "content": system_prompt}]
+    if request.history:
+        messages.extend(request.history)
+    messages.append({"role": "user", "content": request.message})
+    
+    try:
+        print("DEBUG: Sending request to AI API (grok-3)...")
+        api_start = time.time()
+        completion = client.chat.completions.create(
+            model="grok-3",
+            messages=messages,
+            temperature=0.7
+        )
+        api_duration = time.time() - api_start
+        print(f"DEBUG: AI API response received in {api_duration:.2f}s")
+        
+        result = {"response": completion.choices[0].message.content}
+        total_duration = time.time() - request_start
+        print(f"DEBUG: Total /contract-chat duration: {total_duration:.2f}s")
+        return result
+    except Exception as e:
+        print(f"DEBUG: AI API failed: {e}")
+        return {"response": f"Error: {str(e)}"}
+
 @app.post("/chat")
 def chat_agent(request: ChatRequest):
     # Basic Chat
