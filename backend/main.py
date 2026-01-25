@@ -165,6 +165,44 @@ def get_contracts():
     if not os.path.exists(contracts_dir): return []
     return [{"id": f, "name": f, "size": "Unknown", "author": "System"} for f in os.listdir(contracts_dir) if not f.startswith("~$")]
 
+@app.get("/policies")
+def get_policies():
+    """List documents in the knowledge_base/policies folder"""
+    import datetime
+    policies_dir = os.path.join(current_dir, "knowledge_base", "policies")
+    if not os.path.exists(policies_dir):
+        return []
+    
+    docs = []
+    for f in os.listdir(policies_dir):
+        if f.startswith("~$") or os.path.isdir(os.path.join(policies_dir, f)):
+            continue
+            
+        file_path = os.path.join(policies_dir, f)
+        stats = os.stat(file_path)
+        
+        # Format size
+        size_bytes = stats.st_size
+        if size_bytes < 1024:
+            size_str = f"{size_bytes} B"
+        elif size_bytes < 1024 * 1024:
+            size_str = f"{size_bytes / 1024:.1f} KB"
+        else:
+            size_str = f"{size_bytes / (1024 * 1024):.1f} MB"
+            
+        # Format date
+        mtime = datetime.datetime.fromtimestamp(stats.st_mtime)
+        date_str = mtime.strftime("%b %d, %Y")
+        
+        docs.append({
+            "id": f,
+            "name": f,
+            "date": date_str,
+            "size": size_str,
+            "author": "Policy"
+        })
+    return docs
+
 @app.post("/analyze")
 def analyze_template(request: AnalyzeRequest):
     try:

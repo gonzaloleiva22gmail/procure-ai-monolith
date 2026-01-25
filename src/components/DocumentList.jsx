@@ -27,13 +27,13 @@ const DocumentList = ({ title, type, onSelectTemplate }) => {
                     setDocs(enriched);
                 })
                 .catch(err => console.error("Failed to fetch contracts", err));
-        } else {
-            // Mock data for policies
-            setDocs([
-                { id: 1, name: 'Global Procurement Policy v2.0', date: 'Sep 10, 2024', size: '2.4 MB', author: 'Compliance' },
-                { id: 2, name: 'Sustainable Sourcing Guidelines', date: 'Oct 01, 2024', size: '890 KB', author: 'ESG Team' },
-                { id: 3, name: 'Vendor Onboarding Procedures', date: 'Nov 20, 2024', size: '1.5 MB', author: 'Ops' },
-            ]);
+        } else if (type === 'policies') {
+            fetch('/policies')
+                .then(res => res.json())
+                .then(data => {
+                    setDocs(data);
+                })
+                .catch(err => console.error("Failed to fetch policies", err));
         }
     }, [type]);
 
@@ -64,11 +64,13 @@ const DocumentList = ({ title, type, onSelectTemplate }) => {
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex-1">
-                {docs.length === 0 && (type === 'templates' || type === 'contracts') ? (
+                {docs.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-64 text-slate-500">
                         <FileText size={48} className="text-slate-300 mb-4" />
                         <p className="text-lg font-medium">No documents found</p>
-                        <p className="text-sm">Please add files to <code className="bg-slate-100 px-1 py-0.5 rounded">backend/{type === 'templates' ? 'templates' : 'Contracts'}</code></p>
+                        <p className="text-sm">Please add files to <code className="bg-slate-100 px-1 py-0.5 rounded">
+                            {type === 'templates' ? 'backend/templates' : type === 'contracts' ? 'backend/Contracts' : 'backend/knowledge_base/policies'}
+                        </code></p>
                     </div>
                 ) : (
                     <table className="w-full text-left">
