@@ -30,7 +30,7 @@ function App() {
       case 'policies':
         return <DocumentList title="Policies & Procedures" type="policies" />;
       case 'tenders':
-        return <TendersDashboard />;
+        return <TendersDashboard onViewChange={setActiveView} />;
       case 'analyst':
         return <AnalystDashboard />;
 
