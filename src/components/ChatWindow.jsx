@@ -1,15 +1,17 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Send, Shield, Bot, User, Briefcase, FileText, Download } from "lucide-react";
+import { Send, Shield, Bot, User, Briefcase, FileText, Download, Scale } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
-const ChatWindow = ({ activeTemplate, activeContract }) => {
+const ChatWindow = ({ activeTemplate, activeContract, activePolicy }) => {
     // Determine the initial message dynamically
     const getInitialMessage = () => {
         if (activeTemplate) return `I'm ready to help you build your **${activeTemplate.name}**. What information should we start with?`;
         if (activeContract) return `Reviewing **${activeContract.name}**. Ask me anything about this contract.`;
+        if (activePolicy) return `Reviewing **${activePolicy.name}**. Ask me anything about this policy.`;
 
-        // Contract Assistant Default Greeting
-        if (activeContract !== undefined) return "I am your Contract Assistant. You can ask me about any contract in the repository, or select a file to auto-extract its key terms.";
+        // Default Greetings
+        if (activeContract !== undefined) return "I am your Contract Assistant. You can ask me about any contract in the repository, or select a file to extract its key terms.";
+        if (activePolicy !== undefined) return "I am your Policy Assistant. Select a policy to ask questions about compliance and procedures.";
 
         return "Welcome back. I'm ready to assist with your procurement tasks. I am your **Data Analyst**.";
     };
@@ -33,7 +35,7 @@ const ChatWindow = ({ activeTemplate, activeContract }) => {
     useEffect(() => {
         setMessages([{ role: "assistant", content: getInitialMessage() }]);
         setTemplateData({}); // Clear stored data when switching templates
-    }, [activeTemplate, activeContract]);
+    }, [activeTemplate, activeContract, activePolicy]);
 
     const handleSend = async () => {
         if (!input.trim()) return;
@@ -55,11 +57,16 @@ const ChatWindow = ({ activeTemplate, activeContract }) => {
                 endpoint = "/template-chat";
                 payload = { message: currentInput, filename: activeTemplate.name };
             } else if (activeContract !== undefined) {
-                // Contract Mode (Specific or General)
                 endpoint = "/contract-chat";
                 payload = {
                     message: currentInput,
                     filename: activeContract ? activeContract.name : null
+                };
+            } else if (activePolicy !== undefined) {
+                endpoint = "/policy-chat";
+                payload = {
+                    message: currentInput,
+                    filename: activePolicy ? activePolicy.name : null
                 };
             }
 
@@ -139,21 +146,23 @@ const ChatWindow = ({ activeTemplate, activeContract }) => {
             {/* Header */}
             <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-white rounded-t-lg">
                 <div className="flex items-center space-x-3">
-                    <div className={`p-2 rounded-lg ${activeTemplate ? "bg-indigo-100" : activeContract ? "bg-emerald-100" : "bg-blue-100"}`}>
+                    <div className={`p-2 rounded-lg ${activeTemplate ? "bg-indigo-100" : activeContract ? "bg-emerald-100" : activePolicy ? "bg-sky-100" : "bg-blue-100"}`}>
                         {activeTemplate ? (
                             <Briefcase className="w-5 h-5 text-indigo-600" />
                         ) : activeContract ? (
                             <FileText className="w-5 h-5 text-emerald-600" />
+                        ) : activePolicy ? (
+                            <Scale className="w-5 h-5 text-sky-600" />
                         ) : (
                             <Shield className="w-5 h-5 text-blue-600" />
                         )}
                     </div>
                     <div>
                         <h2 className="font-semibold text-slate-800">
-                            {activeTemplate ? "Template Consultant" : activeContract ? "Contract Assistant" : "Data Analyst"}
+                            {activeTemplate ? "Template Consultant" : activeContract ? "Contract Assistant" : activePolicy ? "Policy Assistant" : "Data Analyst"}
                         </h2>
                         <p className="text-xs text-slate-500">
-                            {activeTemplate ? `Drafting: ${activeTemplate.name}` : activeContract ? `Viewing: ${activeContract.name}` : "Enterprise Agent"}
+                            {activeTemplate ? `Drafting: ${activeTemplate.name}` : activeContract ? `Viewing: ${activeContract.name}` : activePolicy ? `Viewing: ${activePolicy.name}` : "Enterprise Agent"}
                         </p>
                     </div>
                 </div>
@@ -173,7 +182,7 @@ const ChatWindow = ({ activeTemplate, activeContract }) => {
                                         headers: { "Content-Type": "application/json" },
                                         body: JSON.stringify({
                                             filename: activeTemplate.name,
-                                            answers: templateData // FIXED: Sending actual captured data
+                                            answers: templateData
                                         }),
                                     });
 
@@ -257,7 +266,7 @@ const ChatWindow = ({ activeTemplate, activeContract }) => {
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyPress={(e) => e.key === "Enter" && handleSend()}
-                        placeholder={activeTemplate ? "Answer the consultant..." : activeContract ? "Ask about the contract..." : "Ask the analyst..."}
+                        placeholder={activeTemplate ? "Answer the consultant..." : activeContract ? "Ask about the contract..." : activePolicy ? "Ask about the policy..." : "Ask the analyst..."}
                         className="w-full pl-4 pr-12 py-4 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all shadow-sm text-slate-700 placeholder-slate-400"
                     />
                     <button

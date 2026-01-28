@@ -301,6 +301,88 @@ def contract_chat(request: ChatRequest):
         print(f"DEBUG: AI API failed: {e}")
         return {"response": f"Error: {str(e)}"}
 
+@app.post("/policy-chat")
+def policy_chat(request: ChatRequest):
+    """Policy Assistant endpoint - handles questions about policy documents"""
+    import time
+    request_start = time.time()
+    print(f"DEBUG: Endpoint /policy-chat hit with message: {request.message[:50]}...")
+    
+    # Build context based on selected policy
+    policy_context = "No specific policy selected."
+    if request.filename:
+        try:
+            print(f"DEBUG: Loading policy: {request.filename}")
+            # Policy documents are in backend/knowledge_base/policies
+            policy_path = os.path.join(current_dir, "knowledge_base", "policies", request.filename)
+            if os.path.exists(policy_path):
+                # Read policy content
+                # Support .txt, .pdf (if we had text extraction), .docx
+                # For now, reuse the same logic as contracts (txt/docx) or generic
+                if policy_path.endswith('.txt'):
+                    with open(policy_path, 'r', encoding='utf-8') as f:
+                        policy_content = f.read()
+                elif policy_path.endswith('.docx'):
+                    from docx import Document
+                    doc = Document(policy_path)
+                    policy_content = '\n'.join([para.text for para in doc.paragraphs])
+                elif policy_path.endswith('.pdf'):
+                     # Basic PDF support using pypdf if available, else placeholder
+                    try:
+                        from pypdf import PdfReader
+                        reader = PdfReader(policy_path)
+                        policy_content = ""
+                        for page in reader.pages:
+                            policy_content += page.extract_text() + "\n"
+                    except ImportError:
+                        policy_content = "PDF support requires pypdf. Please install it."
+                    except Exception as e:
+                        policy_content = f"Error reading PDF: {str(e)}"
+                else:
+                    policy_content = "Unsupported file format"
+                
+                policy_context = f"Policy Document: {request.filename}\n\nContent:\n{policy_content[:10000]}"  # Limit to first 10000 chars
+                print(f"DEBUG: Policy loaded successfully. Length: {len(policy_content)}")
+            else:
+                print(f"DEBUG: Policy file NOT found at {policy_path}")
+        except Exception as e:
+            print(f"DEBUG: Error loading policy: {e}")
+            policy_context = f"Error loading policy: {str(e)}"
+    
+    system_prompt = (
+        "You are a Policy Assistant specialized in answering questions about company policies and procedures. "
+        f"Context: {policy_context}\n\n"
+        "Your role is to:\n"
+        "1. Answer user questions based STRICTLY on the provided policy document.\n"
+        "2. If the policy does not contain the answer, state that explicitly.\n"
+        "3. Provide clear, direct answers citing the relevant section if possible.\n"
+        "4. maintain a professional and helpful tone."
+    )
+    
+    messages = [{"role": "system", "content": system_prompt}]
+    if request.history:
+        messages.extend(request.history)
+    messages.append({"role": "user", "content": request.message})
+    
+    try:
+        print("DEBUG: Sending request to AI API (grok-3)...")
+        api_start = time.time()
+        completion = client.chat.completions.create(
+            model="grok-3",
+            messages=messages,
+            temperature=0.5 # Lower temperature for more accurate policy answers
+        )
+        api_duration = time.time() - api_start
+        print(f"DEBUG: AI API response received in {api_duration:.2f}s")
+        
+        result = {"response": completion.choices[0].message.content}
+        total_duration = time.time() - request_start
+        print(f"DEBUG: Total /policy-chat duration: {total_duration:.2f}s")
+        return result
+    except Exception as e:
+        print(f"DEBUG: AI API failed: {e}")
+        return {"response": f"Error: {str(e)}"}
+
 @app.post("/chat")
 def chat_agent(request: ChatRequest):
     # Basic Chat

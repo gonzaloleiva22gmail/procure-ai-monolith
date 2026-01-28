@@ -3,6 +3,7 @@ import Sidebar from './components/Sidebar';
 import ChatWindow from './components/ChatWindow';
 import DocumentList from './components/DocumentList';
 import ContractsLayout from './components/ContractsLayout';
+import PoliciesLayout from './components/PoliciesLayout';
 import TendersDashboard from './components/TendersDashboard';
 import AnalystDashboard from './components/AnalystDashboard';
 
@@ -28,7 +29,7 @@ function App() {
           />
         );
       case 'policies':
-        return <DocumentList title="Policies & Procedures" type="policies" />;
+        return <PoliciesLayout />;
       case 'tenders':
         return <TendersDashboard onViewChange={setActiveView} />;
       case 'analyst':
