@@ -233,13 +233,76 @@ def draft_content(request: DraftRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/contracts/extract")
+def extract_contract_terms(request: AnalyzeRequest):
+    """
+    Extracts predefined standard terms (from key_terms.json) using AI.
+    This fulfills the requirement for the sidebar in the Contracts UI.
+    """
+    import json
+    import time
+    
+    # 1. Load keys from key_terms.json
+    try:
+        kt_path = os.path.join(current_dir, "key_terms.json")
+        with open(kt_path, "r") as f:
+            standard_terms = json.load(f)
+    except Exception as e:
+        print(f"DEBUG: Failed to load key_terms.json: {e}")
+        standard_terms = ["Contract Title", "Parties Involved", "Effective Date"] # Fallback
+
+    # 2. Load contract content
+    try:
+        contract_path = os.path.join(current_dir, "Contracts", request.filename)
+        if not os.path.exists(contract_path):
+            raise HTTPException(status_code=404, detail="Contract not found")
+            
+        if contract_path.endswith('.txt'):
+            with open(contract_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+        elif contract_path.endswith('.docx'):
+            from docx import Document
+            doc = Document(contract_path)
+            content = '\n'.join([para.text for para in doc.paragraphs])
+        else:
+            raise HTTPException(status_code=400, detail="Unsupported format")
+        
+        # 3. Call AI to extract SPECIFIC terms
+        prompt = (
+            "You are a specialized legal data extractor. "
+            f"Analyze the following contract and extract exactly these terms: {', '.join(standard_terms)}.\n\n"
+            "Format your response as a valid JSON object where keys are the terms and values are the extracted snippets.\n"
+            "If a term is not found, use 'Not found'.\n\n"
+            f"Contract content (first 8000 chars):\n{content[:8000]}"
+        )
+        
+        completion = client.chat.completions.create(
+            model="grok-3",
+            messages=[{"role": "user", "content": prompt}],
+            response_format={"type": "json_object"}
+        )
+        
+        return json.loads(completion.choices[0].message.content)
+    except Exception as e:
+        print(f"DEBUG: Extraction failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/contract-chat")
 def contract_chat(request: ChatRequest):
     """Contract Assistant endpoint - handles questions about contracts"""
     import time
+    import json
     request_start = time.time()
     print(f"DEBUG: Endpoint /contract-chat hit with message: {request.message[:50]}...")
     
+    # Load standardized terms for prompt awareness
+    try:
+        kt_path = os.path.join(current_dir, "key_terms.json")
+        with open(kt_path, "r") as f:
+            standard_terms = json.load(f)
+    except:
+        standard_terms = []
+
     # Build context based on selected contract
     contract_context = "No specific contract selected."
     if request.filename:
@@ -270,10 +333,11 @@ def contract_chat(request: ChatRequest):
         "You are a Contract Assistant specialized in analyzing procurement contracts. "
         f"Context: {contract_context}\n\n"
         "Your role is to:\n"
-        "1. Answer questions about the contract content\n"
-        "2. Extract key terms, dates, parties, obligations\n"
-        "3. Identify risks or important clauses\n"
-        "4. Provide clear, concise summaries\n\n"
+        "1. Answer questions about the contract content.\n"
+        f"2. When extracting key terms, prioritize these Standard Categories: {', '.join(standard_terms)}.\n"
+        "3. **Strict Key Terms Rule**: If the user specifically asks for 'key terms', 'contract terms', or a summary of terms, you MUST provide ONLY the categories listed in the Standard Categories. Do NOT volunteer supplemental terms in this specific summary list.\n"
+        "4. However, you are still expected to answer questions about any other part of the contract (e.g., risks, specific clauses like Audit Rights) if the user asks about them specifically or if the question is broader than just 'show me the key terms'.\n"
+        "5. Provide clear, concise summaries.\n\n"
         "If no specific contract is loaded, provide general contract analysis guidance."
     )
     
