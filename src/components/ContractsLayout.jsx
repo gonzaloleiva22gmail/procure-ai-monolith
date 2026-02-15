@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Bot, Loader2, Calendar, DollarSign, Shield, Info, ChevronRight } from 'lucide-react';
+import { FileText, Bot, Loader2, Calendar, DollarSign, Shield, Info, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 import ChatWindow from './ChatWindow';
 
 const ContractsLayout = () => {
@@ -7,6 +7,7 @@ const ContractsLayout = () => {
     const [selectedContract, setSelectedContract] = useState(null);
     const [extractedData, setExtractedData] = useState(null);
     const [isExtracting, setIsExtracting] = useState(false);
+    const [isTermsExpanded, setIsTermsExpanded] = useState(true);
 
     // Fetch contracts list on mount
     useEffect(() => {
@@ -111,25 +112,31 @@ const ContractsLayout = () => {
                         </div>
 
                         {/* Extraction Panel */}
-                        <div className="p-4 border-b border-slate-200 bg-slate-50/30 max-h-[40%] overflow-y-auto">
+                        <div className="p-4 border-b border-slate-200 bg-slate-50/30 overflow-hidden transition-all duration-300 ease-in-out">
                             <div className="flex items-center justify-between mb-3">
-                                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                                <button
+                                    onClick={() => setIsTermsExpanded(!isTermsExpanded)}
+                                    className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2 hover:text-blue-600 transition-colors"
+                                >
                                     <Info size={14} /> Key Terms
-                                </h4>
+                                    {isTermsExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                                </button>
                                 {isExtracting && <span className="text-xs text-blue-600 flex items-center gap-1"><Loader2 size={12} className="animate-spin" /> Analyzing...</span>}
                             </div>
 
-                            {extractedData ? (
-                                <div className="space-y-3">
-                                    {Object.entries(extractedData).map(([key, value]) => (
-                                        <div key={key} className="bg-white p-3 rounded-lg border border-slate-100 shadow-sm">
-                                            <p className="text-xs text-slate-500 font-medium mb-1">{key}</p>
-                                            <p className="text-sm text-slate-800">{value || "N/A"}</p>
-                                        </div>
-                                    ))}
+                            {isTermsExpanded && (
+                                <div className="max-h-[300px] overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+                                    {extractedData ? (
+                                        Object.entries(extractedData).map(([key, value]) => (
+                                            <div key={key} className="bg-white p-3 rounded-lg border border-slate-100 shadow-sm">
+                                                <p className="text-xs text-slate-500 font-medium mb-1">{key}</p>
+                                                <p className="text-sm text-slate-800">{value || "N/A"}</p>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        !isExtracting && <div className="text-sm text-slate-400 italic">No data extracted.</div>
+                                    )}
                                 </div>
-                            ) : (
-                                !isExtracting && <div className="text-sm text-slate-400 italic">No data extracted.</div>
                             )}
                         </div>
 
