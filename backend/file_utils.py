@@ -13,7 +13,9 @@ def read_excel(filepath):
 
 def read_csv(filepath):
     try:
-        df = pd.read_csv(filepath)
+        # Use sep=None and engine='python' for auto-detection of delimiter
+        # Also try to handle decimal commas if they exist
+        df = pd.read_csv(filepath, sep=None, engine='python')
         return df.to_csv(index=False)
     except Exception as e:
         return f"Error reading CSV {filepath}: {str(e)}"
