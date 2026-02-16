@@ -1,0 +1,81 @@
+Supplier_Name,Supplier_Status,Category,Month,Year,Sales
+Alpha Supplies,Active,Facilities,November,2023,37098 
+Alpha Supplies,Active,Logistics,April,2023,16395 
+Alpha Supplies,Active,IT,October,2024,17280 
+Alpha Supplies,Active,Logistics,September,2023,59987 
+Bravo Distributors,Inactive,IT,April,2024,25926 
+Bravo Distributors,Inactive,Facilities,December,2024,25379 
+Bravo Distributors,Inactive,IT,February,2023,52052 
+Bravo Distributors,Active,Consulting,June,2024,75284 
+Cascade Group,Active,Logistics,February,2024,43427 
+Cascade Group,Active,IT,November,2024,11006 
+Cascade Group,Inactive,IT,November,2023,35512 
+Cascade Group,Inactive,Office Supplies,May,2024,53520 
+Delta Traders,Inactive,IT,June,2023,84840 
+Delta Traders,Active,Office Supplies,November,2023,65589 
+Delta Traders,Active,Facilities,July,2024,12331 
+Delta Traders,Inactive,Consulting,April,2023,40093 
+Evergreen Co,Inactive,Office Supplies,February,2023,90909 
+Evergreen Co,Inactive,Office Supplies,August,2024,39718 
+Evergreen Co,Inactive,Logistics,March,2023,61155 
+Evergreen Co,Inactive,Office Supplies,October,2024,23131 
+Frontline Goods,Active,IT,September,2024,19371 
+Frontline Goods,Inactive,Logistics,March,2023,13326 
+Frontline Goods,Inactive,Logistics,July,2024,37953 
+Frontline Goods,Active,Logistics,September,2023,39973 
+Global Source,Active,Facilities,November,2024,61985 
+Global Source,Active,Facilities,March,2024,70612 
+Global Source,Inactive,Logistics,March,2023,84818 
+Global Source,Inactive,Office Supplies,April,2023,75697 
+Horizon Pty Ltd,Inactive,Consulting,September,2023,7552 
+Horizon Pty Ltd,Inactive,Office Supplies,February,2024,12592 
+Horizon Pty Ltd,Active,Consulting,April,2023,14071 
+Horizon Pty Ltd,Active,Facilities,March,2024,74163 
+Ironclad Services,Active,Logistics,October,2024,31365 
+Ironclad Services,Inactive,Facilities,December,2024,62422 
+Ironclad Services,Active,Office Supplies,September,2024,34451 
+Ironclad Services,Active,Logistics,February,2024,77603 
+Jade Enterprises,Active,IT,April,2023,87719 
+Jade Enterprises,Active,IT,January,2023,48309 
+Jade Enterprises,Inactive,Consulting,February,2023,33080 
+Jade Enterprises,Inactive,Office Supplies,September,2023,66993 
+Keystone Supply,Active,IT,July,2023,91374 
+Keystone Supply,Inactive,Consulting,July,2024,66213 
+Keystone Supply,Active,IT,December,2023,57772 
+Keystone Supply,Active,Office Supplies,December,2024,30112 
+Lighthouse Corp,Active,Consulting,April,2024,29050 
+Lighthouse Corp,Active,IT,May,2024,63082 
+Lighthouse Corp,Active,Logistics,September,2023,6934 
+Lighthouse Corp,Active,Consulting,February,2023,68653 
+Momentum Wholesale,Inactive,IT,August,2023,26579 
+Momentum Wholesale,Inactive,Facilities,July,2023,64638 
+Momentum Wholesale,Inactive,Office Supplies,May,2024,29890 
+Momentum Wholesale,Active,Logistics,May,2023,76066 
+Northstar Ltd,Active,IT,January,2024,81569 
+Northstar Ltd,Active,Logistics,August,2023,15500 
+Northstar Ltd,Active,Office Supplies,March,2023,57923 
+Northstar Ltd,Active,Logistics,February,2023,15745 
+Omni Trade,Inactive,Office Supplies,July,2024,92782 
+Omni Trade,Active,Facilities,December,2024,56876 
+Omni Trade,Inactive,Facilities,March,2024,14508 
+Omni Trade,Active,IT,January,2024,75468 
+Pioneer Goods,Active,Facilities,April,2024,14016 
+Pioneer Goods,Inactive,Logistics,May,2023,44651 
+Pioneer Goods,Inactive,IT,October,2023,22601 
+Pioneer Goods,Inactive,Facilities,February,2023,84276 
+Quantum Supplies,Active,Facilities,April,2024,71244 
+Quantum Supplies,Active,IT,August,2024,88136 
+Quantum Supplies,Active,IT,July,2024,48719 
+Quantum Supplies,Active,Consulting,March,2024,77309 
+Redwood Trading,Active,IT,December,2024,14862 
+Redwood Trading,Active,Facilities,December,2023,81350 
+Redwood Trading,Inactive,Office Supplies,September,2023,10482 
+Redwood Trading,Active,Facilities,May,2024,32535 
+Summit Group,Active,Facilities,November,2023,78385 
+Summit Group,Active,Office Supplies,July,2023,28206 
+Summit Group,Inactive,Office Supplies,March,2024,39970 
+Summit Group,Inactive,IT,March,2023,66694 
+TrueValue Co,Inactive,Facilities,April,2023,45001 
+TrueValue Co,Inactive,Facilities,January,2023,41517 
+TrueValue Co,Inactive,Logistics,February,2024,57386 
+TrueValue Co,Active,IT,November,2024,39237 
