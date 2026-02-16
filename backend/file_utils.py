@@ -11,6 +11,13 @@ def read_excel(filepath):
     except Exception as e:
         return f"Error reading Excel {filepath}: {str(e)}"
 
+def read_csv(filepath):
+    try:
+        df = pd.read_csv(filepath)
+        return df.to_csv(index=False)
+    except Exception as e:
+        return f"Error reading CSV {filepath}: {str(e)}"
+
 def read_pdf(filepath):
     try:
         reader = PdfReader(filepath)
@@ -61,6 +68,8 @@ def get_knowledge_base_content(base_path):
             content = ""
             if ext in ['xlsx', 'xls']:
                 content = read_excel(file_path)
+            elif ext == 'csv':
+                content = read_csv(file_path)
             elif ext == 'pdf':
                 content = read_pdf(file_path)
             elif ext in ['docx', 'doc']:
